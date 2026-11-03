@@ -1,4 +1,4 @@
-# US election widget for OBS
+# 🍔 — US election widget for OBS
 
 A free-to-view 480 × 360 OBS overlay at **[burger.perd.dev](https://burger.perd.dev/)**. It displays 2026 Senate and House election results from The People's Tally, with a US map, an enlarged state, scrolling digits, and sliding text. The interface is in English.
 
