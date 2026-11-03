@@ -1,0 +1,25 @@
+{
+  "name": "usa-election-widget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An OBS overlay for 2026 US election results, hosted on Cloudflare Workers with shared D1 caching.",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check server.mjs && node --check lib/tally.mjs && node --check lib/shared-cache.mjs && node --check public/app.js && node --check public/results.js && node --check public/motion.js && node --check public/map.js && node --check public/view-model.js && node --check public/sources.js && tsc --noEmit",
+    "build": "cf build",
+    "deploy": "cf deploy",
+    "dev:cloud": "cf dev"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.10",
+    "cf": "1.0.0-beta.27",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

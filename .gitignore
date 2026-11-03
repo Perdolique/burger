@@ -1,0 +1,16 @@
+node_modules/
+.cloudflare/
+.wrangler/
+.openai/
+.env*
+.dev.vars*
+.npmrc
+.pnpmrc
+.DS_Store
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
