@@ -28,7 +28,7 @@ export function topCandidates(race) {
 export function shortlist(races, office, now = Date.now()) {
   const contests = races.filter(race => race.office === office);
   const timestamp = race => Date.parse(race.calledAt ?? race.asOf ?? '') || 0;
-  const recent = contests.filter(race => race.status === 'called' && now - timestamp(race) >= 0 && now - timestamp(race) < 15 * 60_000)
+  const recent = contests.filter(race => race.status === 'called' && race.calledAt && now - timestamp(race) >= 0 && now - timestamp(race) < 15 * 60_000)
     .sort((a, b) => timestamp(b) - timestamp(a) || a.id.localeCompare(b.id)).slice(0, 2);
   const gap = race => {
     const top = topCandidates(race);

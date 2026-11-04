@@ -11,14 +11,15 @@
   <main class="sources-content">
     <h1>Sources and data status</h1>
     <p>The widget covers the 2026 elections: 35 Senate contests and 435 House seats. Senate seats not being contested are excluded.</p>
-    <p><a href="https://thepeoplestally.com/open-data/">The People's Tally — 2026 U.S. midterm election results</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Results are unofficial until certified by each state. Accessed November 3, 2026.</p>
-    <p>Live coverage is partial. Empty results mean data is unavailable, not zero votes. Test records are excluded. A winner requires a named calling source; a lead is not a call.</p>
+    <p>Election data by <a href="https://civicapi.org/">civicAPI</a>. Free to use with attribution. Vote counts are aggregated from election authorities; calls are made by civicAPI’s own decision desk, not AP. Results are unofficial until certified by each state.</p>
+    <p>A leader is not a winner: seats count only candidates marked as winners by civicAPI. Test data is excluded. Missing or invalid chamber feeds retain saved results. A chamber with no saved feed has unknown seat totals.</p>
     <p id="health" role="status">Loading source status…</p>
     <h2>Current result sources</h2>
     <ul id="result-sources"></ul>
-    <h2>Original result timestamps</h2>
+    <h2>Source update timestamps</h2>
     <ul id="result-times"></ul>
-    <h2>State feeds</h2>
+    <p>civicAPI’s aggregate feeds provide one update time per chamber, not a timestamp for each race or call. Individual call times are unavailable.</p>
+    <h2>Chamber feeds</h2>
     <ul id="feed-sources"></ul>
     <h2>Graphics and fonts</h2>
     <p>Party symbols: <a href="https://fontawesome.com/">Font Awesome Free</a>, <a href="/licenses/font-awesome.txt">CC BY 4.0</a>. Map: <a href="https://github.com/topojson/us-atlas">us-atlas 3.0.1</a>, <a href="/licenses/us-atlas.txt">ISC</a>. Nunito font: <a href="/fonts/OFL.txt">SIL Open Font License 1.1</a>.</p>

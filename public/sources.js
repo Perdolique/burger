@@ -1,4 +1,4 @@
-import { STATE_NAMES, raceTitle } from './view-model.js';
+import { raceTitle } from './view-model.js';
 
 function link(label, href) {
   const node = document.createElement('a');
@@ -38,7 +38,7 @@ async function refresh() {
     for (const race of data.races.filter(race => race.reported || race.status === 'called')) {
       const item = document.createElement('li');
       const office = race.office === 'S' ? 'Senate' : 'House of Representatives';
-      item.textContent = `${office} · ${raceTitle(race)} — results: ${formatTime(race.asOf)}` +
+      item.textContent = `${office} · ${raceTitle(race)} — chamber source updated: ${formatTime(race.asOf)}` +
         (race.status === 'called' ? `; call: ${formatTime(race.calledAt)}` : '') +
         (race.sourceStale ? '; saved stale data' : '');
       times.append(item);
@@ -47,7 +47,7 @@ async function refresh() {
     const feeds = document.getElementById('feed-sources'); feeds.replaceChildren();
     for (const [state, feed] of Object.entries(data.feedStatus).sort(([a], [b]) => a.localeCompare(b))) {
       const item = document.createElement('li');
-      item.append(link(`${STATE_NAMES[state] ?? state}: ${feed.source ?? 'state source'}`, feed.url));
+      item.append(link(`${state === 'S' ? 'Senate' : state === 'H' ? 'House' : state}: ${feed.source ?? 'source'}`, feed.url));
       item.append(document.createTextNode(` — ${feed.mode === 'dry' ? 'test mode; numbers excluded' : feed.error ? 'source error' : feed.feed === 'ok' ? 'connected' : 'waiting for data'}`));
       feeds.append(item);
     }

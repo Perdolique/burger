@@ -1,6 +1,6 @@
 # 🍔 — US election widget for OBS
 
-A free-to-view 480 × 360 OBS overlay at **[burger.perd.dev](https://burger.perd.dev/)**. It displays 2026 Senate and House election results from The People's Tally, with a US map, an enlarged state, scrolling digits, and sliding text. The interface is in English.
+A free-to-view 480 × 360 OBS overlay at **[burger.perd.dev](https://burger.perd.dev/)**. It displays 2026 Senate and House election results from civicAPI, with a US map, an enlarged state, scrolling digits, and sliding text. The interface is in English.
 
 ## Add to OBS
 
@@ -35,27 +35,27 @@ If the card shows **Waiting**, the source has no published result for that race 
 
 ## Behavior
 
-- Each open widget checks for data 60 seconds after its previous request completes. Hosted widgets share a D1 cache across viewers and Worker instances; upstream refresh attempts are at least 60 seconds apart and start when a viewer requests an update. Race metadata refreshes every 15 minutes.
+- Each open widget checks for data 60 seconds after its previous request completes. Hosted widgets share a D1 cache across viewers and Worker instances; upstream refresh attempts are at least 60 seconds apart and start when a viewer requests an update. Each refresh requests one Senate aggregate and one House aggregate from civicAPI.
 - Each race is shown for 12 seconds. The root URL changes chamber after three races: Senate for 36 seconds, then House for 36 seconds. The chamber-specific URLs keep rotating races within their selected chamber.
-- The selection favors recent calls and close races with reported votes, then competitive races from the source metadata. The map locates the selected race's state; House district shapes are not shown.
+- The selection favors close races with reported votes. Races without votes follow in a stable order. The map locates the selected race's state; House district shapes are not shown.
 - Seat counts include only the **35 Senate contests and 435 House seats being elected in 2026**. Senate holdovers are excluded. These numbers are not a full-chamber majority count.
-- A leader does not count as a winner. A called race needs a named calling source or a named certified-results source. Live counts never overwrite a named call in the results snapshot.
+- A leader does not count as a winner. A seat counts only when civicAPI marks an individual candidate as a winner. These calls come from civicAPI’s own decision desk, not AP. Newer source corrections can retract or change a call. National party seat totals are never used.
 - Test, dry-run, demo, and simulation records are excluded. There is no automatic fallback to demo election numbers.
-- The footer time is the last successful API synchronization, shown in the browser's local timezone using English formatting. It does not mean votes changed at that moment. The underlying result and call timestamps, grouped by race, and original sources are available on the sources page. Missing source timestamps are shown as unknown.
-- On a connection failure, the last results remain visible with **Offline**. The timestamp stays unchanged. Missing previously reported races retain their last values and are marked stale, including when a fallback snapshot is older. The browser keeps a local copy across reloads and restores unavailable races and calls after a server restart; explicit newer corrections still replace saved values.
-- If the calls snapshot has never loaded, seat totals remain unknown (dashes), even if live vote counts are available. A failed snapshot refresh marks previously known call totals stale.
-- The People's Tally has partial live coverage. Empty races are shown as waiting, with dashes for vote shares. Source feed failures appear on the off-air sources page. A waiting race is not automatically called, including an uncontested race.
+- The footer time is the last successful API synchronization, shown in the browser's local timezone using English formatting. It does not mean votes changed at that moment. The sources page lists the upstream chamber update time for each race. The aggregate feeds do not expose individual result or call timestamps; call times are shown as unknown.
+- On a connection failure, the last results remain visible with **Offline**. The timestamp stays unchanged. Missing or invalid chamber feeds retain their last values and are marked stale, including when a response is older. The browser keeps a local copy across reloads and restores unavailable races and calls after a server restart; explicit newer corrections still replace saved values.
+- If a chamber feed has never loaded, its seat totals remain unknown (dashes). A failed chamber refresh marks its previously known totals stale; the other chamber can still update.
+- Races with no reported votes are shown as waiting, with dashes for vote shares. Source feed failures appear on the off-air sources page. A waiting race is not automatically called, including an uncontested race.
 - Reduced-motion browser settings disable animated transitions.
 
-Waiting states use real candidate metadata. Reported and called states are also checked with explicit test fixtures.
+Waiting states use candidate metadata from civicAPI. Reported and called states are also checked with explicit test fixtures.
 
 ## Sources and attribution
 
-The off-air page at **[burger.perd.dev/sources](https://burger.perd.dev/sources)** lists feed health, original result timestamps, and the sources named on result records. Include attribution in the stream description or accompanying credits:
+The off-air page at **[burger.perd.dev/sources](https://burger.perd.dev/sources)** lists chamber feed health, source update timestamps, and links to civicAPI race records. Include attribution in the stream description or accompanying credits:
 
-> Election data: The People's Tally, “2026 U.S. midterm election results,” CC BY 4.0, https://thepeoplestally.com/open-data/. Original state/calling sources and data status: https://burger.perd.dev/sources. Results are unofficial until certified by each state.
+> Election data and race calls: civicAPI, https://civicapi.org/. Calls are civicAPI projections, not AP calls or state certification. Data status: https://burger.perd.dev/sources.
 
-The adapter uses [`/data/core.json`](https://thepeoplestally.com/data/core.json), [`/data/results.json`](https://thepeoplestally.com/data/results.json), and [`/api/live`](https://thepeoplestally.com/api/live), following the [open-data contract](https://thepeoplestally.com/open-data/). No early-vote turnout data is used.
+The adapter uses the civicAPI v2 [Senate aggregate](https://civicapi.org/api/v2/race/87528) and [House aggregate](https://civicapi.org/api/v2/race/87524), following its [API documentation](https://civicapi.org/api-documentation). Use is free for personal and commercial projects with attribution. The adapter validates the election date, office, non-test status, complete 35/435 contest coverage, and candidate records before replacing a saved feed. It sums individual winner flags and excludes Senate holdovers. No early-vote turnout data is used.
 
 Party symbols: [Font Awesome Free](https://fontawesome.com/), CC BY 4.0. Map: [us-atlas 3.0.1](https://github.com/topojson/us-atlas), ISC. Nunito: SIL Open Font License 1.1; the full license is in [public/fonts/OFL.txt](public/fonts/OFL.txt). Fonts and map graphics are bundled with the widget.
 
@@ -103,7 +103,7 @@ The production site is **[burger.perd.dev](https://burger.perd.dev/)**. Deployme
 
 The hosted version uses Cloudflare Workers, Static Assets, and D1. `cloudflare.config.ts` is the deployment source of truth; Vite builds the Worker and copies `public/`. The frontend stays buildless in the local Node server. All interface and demo text is English.
 
-`lib/shared-cache.mjs` stores the last successful snapshot and compact upstream state in D1. A conditional SQL claim grants one updater a short lease, with at least 60 seconds between attempts across all Worker instances. Other viewers read saved results. Missing data and outages retain the last good values; late writers cannot overwrite a newer update. Metadata refreshes every 15 minutes. There is no public write endpoint.
+`lib/shared-cache.mjs` stores the last successful snapshot and upstream chamber feeds in D1. A conditional SQL claim grants one updater a short lease, with at least 60 seconds between attempts across all Worker instances. Other viewers read saved results. Missing data and outages retain the last good values; late writers cannot overwrite a newer update. There is no public write endpoint.
 
 The configuration targets the current owner's account, database, and domain. Deploying there requires access to that Cloudflare account. For your own deployment, change those values in `cloudflare.config.ts` and provision your own D1 database first.
 

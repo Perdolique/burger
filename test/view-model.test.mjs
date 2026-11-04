@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { normalizeData } from '../lib/tally.mjs';
+import { normalizeData } from '../lib/civic.mjs';
 import { shortlist, topCandidates, raceColor, formatPercent, candidateLabel } from '../public/view-model.js';
 import { interiorPoint, tether, calloutLayout } from '../public/map.js';
-import { core, emptyResults, emptyLive, countingFlorida } from './fixtures.mjs';
+import { civicFeed, countingFlorida } from './fixtures.mjs';
 
 test('Waiting races show both major parties and prefer the incumbent over another same-party candidate', () => {
   const race = { reported: false, candidates: [
@@ -16,13 +16,14 @@ test('Waiting races show both major parties and prefer the incumbent over anothe
 });
 
 test('Recent calls and tight reported races take priority, tied leaders keep a neutral map', () => {
-  const base = normalizeData(core, { ...emptyResults, races: { 'S-FL-sp': countingFlorida } }, emptyLive).races[0];
+  const base = normalizeData({ S: civicFeed('S', { fl: countingFlorida }), H: civicFeed('H') }).races[0];
   const now = Date.parse('2026-11-04T02:00:00Z');
   const close = { ...base, id: 'S-WI', candidates: [{ name: 'A', party: 'D', pct: 49.5, votes: 495 }, { name: 'B', party: 'R', pct: 49.4, votes: 494 }] };
   const wide = { ...base, id: 'S-FL-sp', candidates: [{ name: 'A', party: 'D', pct: 70 }, { name: 'B', party: 'R', pct: 30 }] };
   const recent = { ...base, id: 'S-GA', status: 'called', calledAt: '2026-11-04T01:55:00Z' };
+  const unknownCallTime = { ...base, id: 'S-AL', status: 'called', calledAt: null, asOf: '2026-11-04T01:59:00Z' };
   const old = { ...base, id: 'S-OH-sp', status: 'called', calledAt: '2026-11-04T00:00:00Z' };
-  assert.deepEqual(shortlist([wide, close, old, recent], 'S', now).map(race => race.id), ['S-GA', 'S-WI', 'S-FL-sp']);
+  assert.deepEqual(shortlist([wide, close, old, recent, unknownCallTime], 'S', now).map(race => race.id), ['S-GA', 'S-WI', 'S-FL-sp']);
   assert.equal(raceColor(close), '#285DB5');
   const tied = { ...close, candidates: [{ name: 'A', party: 'D', pct: 50, votes: 500 }, { name: 'B', party: 'R', pct: 50, votes: 500 }] };
   assert.equal(raceColor(tied), '#E9DFC9');

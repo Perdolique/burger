@@ -11,7 +11,7 @@
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check server.mjs && node --check lib/tally.mjs && node --check lib/shared-cache.mjs && node --check public/app.js && node --check public/results.js && node --check public/motion.js && node --check public/map.js && node --check public/view-model.js && node --check public/sources.js && tsc --noEmit",
+    "check": "node --check server.mjs && node --check lib/civic.mjs && node --check lib/shared-cache.mjs && node --check public/app.js && node --check public/results.js && node --check public/motion.js && node --check public/map.js && node --check public/view-model.js && node --check public/sources.js && tsc --noEmit",
     "build": "cf build",
     "deploy": "cf deploy",
     "dev:cloud": "cf dev"

@@ -4,6 +4,7 @@ import { validPayload, mergeCachedResults } from './results.js';
 import { shortlist, topCandidates, candidateLabel, formatPercent, raceTitle, raceColor, PARTY_COLORS } from './view-model.js';
 
 const POLL_MS = 60_000;
+// Preserve existing OBS storage across the source migration.
 const CACHE_KEY = 'tally-obs-results-v1';
 const fixedOffice = { '/senate': 'S', '/house': 'H' }[window.location.pathname] ?? null;
 if (fixedOffice) document.title = `${fixedOffice === 'S' ? 'Senate' : 'House of Representatives'} · US Elections`;
@@ -55,10 +56,10 @@ function currentRace(forceSelection = false) {
 function render(forceSelection = false) {
   const race = currentRace(forceSelection);
   const chamber = data?.chambers[office];
-  const callsKnown = chamber && data.callsAvailable !== false;
+  const callsKnown = chamber && (chamber.callsAvailable ?? data.callsAvailable !== false);
   const candidates = topCandidates(race);
   const offline = data?.connection === 'offline' || (!data && failedWithoutData);
-  const stale = !offline && (race?.sourceStale || data?.callsStale);
+  const stale = !offline && (race?.sourceStale || (chamber?.callsStale ?? data?.callsStale));
   text.chamber.set(office === 'S' ? 'Senate' : 'House of Representatives', { size: office === 'S' ? 30 : 27 });
   text.called.set(callsKnown ? `Called ${chamber.called} of ${chamber.total}` : chamber ? 'Seat totals unavailable' : offline ? 'Retrying in one minute' : 'Fetching results…');
   ['D', 'R', 'O'].forEach((party, index) => seats[index].set(callsKnown ? chamber.seats[party] : '—'));
