@@ -69,6 +69,7 @@ test('Malformed, incomplete, wrong-election and test feeds cannot erase valid sa
     'multiple winners': feed => { feed.region_results.fl.candidates.forEach(candidate => { candidate.winner = true; }); },
     'duplicate region': feed => { feed.region_results.FL = feed.region_results.fl; delete feed.region_results.ga; },
     'unknown state': feed => { feed.region_results.zz = feed.region_results.fl; delete feed.region_results.fl; },
+    'ineligible Senate state': feed => { feed.region_results.az = feed.region_results.fl; delete feed.region_results.fl; },
   };
   for (const [name, mutate] of Object.entries(mutations)) await t.test(name, async () => {
     let time = Date.parse('2026-11-04T01:00:00Z');
@@ -85,6 +86,27 @@ test('Malformed, incomplete, wrong-election and test feeds cannot erase valid sa
     assert.equal(next.chambers.H.callsStale, false);
     assert.match(logs[0].error, /Invalid civicAPI/);
     assert.equal(logs[0].path, '/api/v2/race/87528');
+  });
+});
+
+test('Invalid House district substitutions preserve the complete saved chamber', async t => {
+  for (const [valid, invalid] of [['ca-52', 'ca-99'], ['ak-al', 'ak-01']]) await t.test(invalid, async () => {
+    let time = Date.parse('2026-11-04T01:00:00Z');
+    let house = civicFeed('H', { [valid]: calledFlorida });
+    const store = createCivicStore({ now: () => time, log: () => {}, readJson: async path => reader(civicFeed('S'), house)(path) });
+    await store.getSnapshot();
+    house = structuredClone(house);
+    house.region_results[invalid] = house.region_results[valid];
+    delete house.region_results[valid];
+    time += REFRESH_MS;
+    const next = await store.getSnapshot();
+    assert.equal(next.connection, 'partial');
+    assert.equal(next.chambers.H.seats.R, 1);
+    assert.equal(next.chambers.H.callsStale, true);
+    assert.equal(next.chambers.S.callsStale, false);
+    assert.equal(next.races.filter(race => race.office === 'H').length, 435);
+    assert.equal(next.races.some(race => race.id === `H-${valid.toUpperCase()}`), true);
+    assert.equal(next.races.some(race => race.id === `H-${invalid.toUpperCase()}`), false);
   });
 });
 
@@ -133,7 +155,23 @@ test('Old provider snapshots remain available on migration outages; new feeds re
   assert.equal(recovered.connection, 'ok');
 });
 
-test('A completely unavailable cold source returns no fabricated election data', async () => {
-  const store = createCivicStore({ log: () => {}, readJson: async () => { throw new Error('Test outage'); } });
+test('A cold outage returns no fabricated data and waits a full minute before retrying', async () => {
+  let time = Date.parse('2026-11-04T01:00:00Z');
+  let calls = 0;
+  let fail = true;
+  const store = createCivicStore({ now: () => time, log: () => {}, readJson: async path => {
+    calls++;
+    if (fail) throw new Error('Test outage');
+    return reader()(path);
+  } });
   await assert.rejects(store.getSnapshot(), /not available yet/);
+  await assert.rejects(store.getSnapshot(), /not available yet/);
+  assert.equal(calls, 2);
+  fail = false;
+  time += REFRESH_MS - 1;
+  await assert.rejects(store.getSnapshot(), /not available yet/);
+  assert.equal(calls, 2);
+  time++;
+  assert.equal((await store.getSnapshot()).connection, 'ok');
+  assert.equal(calls, 4);
 });

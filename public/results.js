@@ -16,9 +16,8 @@ export function mergeCachedResults(next, previous) {
     if (!old || (!old.reported && old.status !== 'called')) return race;
     const missingCall = !callsKnown(next, race.office) && old.status === 'called' && race.status !== 'called';
     const missingResult = race.resultAvailable === false && !race.reported && race.status !== 'called';
-    const olderCount = race.status !== 'called' &&
-      Date.parse(race.asOf ?? '') < Date.parse(old.asOf ?? '');
-    if (!missingCall && !missingResult && !olderCount) return race;
+    const olderResult = Date.parse(race.asOf ?? '') < Date.parse(old.asOf ?? '');
+    if (!missingCall && !missingResult && !olderResult) return race;
     retainedOffices.add(race.office);
     return { ...old, sourceStale: true, resultAvailable: false, feedError: race.feedError };
   });

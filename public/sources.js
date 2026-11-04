@@ -38,7 +38,7 @@ async function refresh() {
     for (const race of data.races.filter(race => race.reported || race.status === 'called')) {
       const item = document.createElement('li');
       const office = race.office === 'S' ? 'Senate' : 'House of Representatives';
-      item.textContent = `${office} · ${raceTitle(race)} — chamber source updated: ${formatTime(race.asOf)}` +
+      item.textContent = `${office} · ${raceTitle(race)} — source updated: ${formatTime(race.asOf)}` +
         (race.status === 'called' ? `; call: ${formatTime(race.calledAt)}` : '') +
         (race.sourceStale ? '; saved stale data' : '');
       times.append(item);

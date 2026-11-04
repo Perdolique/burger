@@ -48,7 +48,21 @@ test('Browser merging keeps newer counts, accepts fresh calls, and applies call 
   assert.equal(final.chambers.S.seats.R, 1);
   assert.equal(final.races[0].sourceStale, false);
   const correctedCall = structuredClone(called);
-  Object.assign(correctedCall.races[0], { winnerParty: 'D', winnerName: 'Blue Senator' });
-  assert.equal(mergeCachedResults(correctedCall, final).chambers.S.seats.D, 1);
+  Object.assign(correctedCall.races[0], { winnerParty: 'D', winnerName: 'Blue Senator', asOf: '2026-11-04T01:04:00Z' });
+  const correction = mergeCachedResults(correctedCall, final);
+  assert.equal(correction.chambers.S.seats.D, 1);
+  const staleCall = mergeCachedResults(called, correction);
+  assert.equal(staleCall.chambers.S.seats.D, 1);
+  assert.equal(staleCall.chambers.S.seats.R, 0);
+  assert.equal(staleCall.races[0].asOf, '2026-11-04T01:04:00Z');
+  assert.equal(staleCall.races[0].sourceStale, true);
+  assert.equal(staleCall.chambers.S.callsStale, true);
+  assert.equal(staleCall.chambers.H.callsStale, false);
+  // Equal-time and newer corrections still replace the saved call.
+  assert.equal(mergeCachedResults(correctedCall, staleCall).races[0].sourceStale, false);
+  const newerCall = await payload({ senate: civicFeed('S', { fl: calledFlorida }, '2026-11-04T01:05:00Z') });
+  const recovered = mergeCachedResults(newerCall, staleCall);
+  assert.equal(recovered.chambers.S.seats.R, 1);
+  assert.equal(recovered.callsStale, false);
   assert.equal(mergeCachedResults(called, null), called);
 });
